@@ -54,7 +54,7 @@
   const HORIZONTAL_ACCEL = 0.6;
   const HORIZONTAL_FRICTION = 0.85;
   const MAX_HORIZONTAL_SPEED = 6.0;
-  const JUMP_SPEED = 11.5;
+  const JUMP_SPEED = 12.0; // 살짝 상향해 도달 가능 높이 확보
   const PLAYER_WIDTH = 24;
   const PLAYER_HEIGHT = 36;
   const CAMERA_RAISE_THRESHOLD = GAME_HEIGHT * 0.45;
@@ -62,8 +62,9 @@
   const PLATFORM_MAX_WIDTH = 110;
   const PLATFORM_HEIGHT = 12;
   const PLATFORM_VERTICAL_GAP_MIN = 60;
-  const PLATFORM_VERTICAL_GAP_MAX = 110;
-  const MOVING_PLATFORM_CHANCE = 0.18; // 18%
+  const PLATFORM_VERTICAL_GAP_MAX = 95; // 수직 간격 축소로 난이도 완화
+  const MOVING_PLATFORM_CHANCE = 0.12; // 이동형 비중 감소
+  const MAX_PLATFORM_DX = 150; // 연속 플랫폼 간 허용 가로 이동폭 제한
 
   // UI: 틸트 토글 버튼 위치(논리 좌표)
   const TILT_BTN = { x: GAME_WIDTH - 128, y: 8, w: 120, h: 28 };
@@ -203,17 +204,23 @@
       /** @type {Platform[]} */
       this.platforms = [];
       this.highestPlatformY = GAME_HEIGHT;
+      this.lastTopX = GAME_WIDTH / 2 - 50; // 가장 위 플랫폼의 기준 x
     }
-    reset() { this.platforms.length = 0; this.highestPlatformY = GAME_HEIGHT; }
+    reset() { this.platforms.length = 0; this.highestPlatformY = GAME_HEIGHT; this.lastTopX = GAME_WIDTH / 2 - 50; }
 
     spawnInitial() {
       let currentY = GAME_HEIGHT - 20;
-      this.platforms.push({ x: GAME_WIDTH / 2 - 50, y: currentY, width: 100, height: PLATFORM_HEIGHT, type: 'static', vx: 0 });
+      const startX = GAME_WIDTH / 2 - 50;
+      this.platforms.push({ x: startX, y: currentY, width: 100, height: PLATFORM_HEIGHT, type: 'static', vx: 0 });
+      this.lastTopX = startX;
       currentY -= 90;
       for (let i = 0; i < 8; i++) {
         const width = randomRange(PLATFORM_MIN_WIDTH, PLATFORM_MAX_WIDTH);
-        const x = randomRange(10, GAME_WIDTH - width - 10);
+        const minX = clamp(this.lastTopX - MAX_PLATFORM_DX, 10, GAME_WIDTH - width - 10);
+        const maxX = clamp(this.lastTopX + MAX_PLATFORM_DX, 10, GAME_WIDTH - width - 10);
+        const x = randomRange(minX, maxX);
         this.platforms.push({ x, y: currentY, width, height: PLATFORM_HEIGHT, type: Math.random() < MOVING_PLATFORM_CHANCE ? 'moving' : 'static', vx: Math.random() < 0.5 ? 1.2 : -1.2 });
+        this.lastTopX = x;
         currentY -= randomRange(PLATFORM_VERTICAL_GAP_MIN, PLATFORM_VERTICAL_GAP_MAX);
       }
       this.highestPlatformY = Math.min(this.highestPlatformY, currentY);
@@ -223,10 +230,13 @@
       const targetTopY = cameraY - 600;
       while (this.highestPlatformY > targetTopY) {
         const width = randomRange(PLATFORM_MIN_WIDTH, PLATFORM_MAX_WIDTH);
-        const x = randomRange(10, GAME_WIDTH - width - 10);
+        const minX = clamp(this.lastTopX - MAX_PLATFORM_DX, 10, GAME_WIDTH - width - 10);
+        const maxX = clamp(this.lastTopX + MAX_PLATFORM_DX, 10, GAME_WIDTH - width - 10);
+        const x = randomRange(minX, maxX);
         const gap = randomRange(PLATFORM_VERTICAL_GAP_MIN, PLATFORM_VERTICAL_GAP_MAX);
         const newY = this.highestPlatformY - gap;
         this.platforms.push({ x, y: newY, width, height: PLATFORM_HEIGHT, type: Math.random() < MOVING_PLATFORM_CHANCE ? 'moving' : 'static', vx: Math.random() < 0.5 ? 1.2 : -1.2 });
+        this.lastTopX = x;
         this.highestPlatformY = newY;
       }
     }
