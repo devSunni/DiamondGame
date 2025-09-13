@@ -65,6 +65,8 @@
   const PLATFORM_VERTICAL_GAP_MAX = 95; // 수직 간격 축소로 난이도 완화
   const MOVING_PLATFORM_CHANCE = 0.12; // 이동형 비중 감소
   const MAX_PLATFORM_DX = 150; // 연속 플랫폼 간 허용 가로 이동폭 제한
+  const SPRING_PLATFORM_CHANCE = 0.10; // 스프링(고점프) 발판 비율
+  const SPRING_JUMP_MULTIPLIER = 1.7; // 스프링 점프 배수
 
   // UI: 틸트 토글 버튼 위치(논리 좌표)
   const TILT_BTN = { x: GAME_WIDTH - 128, y: 8, w: 120, h: 28 };
@@ -74,7 +76,7 @@
   const STATE_PLAY = 'play';
   const STATE_GAMEOVER = 'gameover';
 
-  /** @typedef {{x:number,y:number,width:number,height:number, type:'static'|'moving', vx:number}} Platform */
+  /** @typedef {{x:number,y:number,width:number,height:number, type:'static'|'moving'|'spring', vx:number}} Platform */
 
   /** 입력 상태 */
   const input = {
@@ -152,7 +154,7 @@
       if (this.y < this.highestY) this.highestY = this.y;
     }
 
-    bounce() { this.vy = -JUMP_SPEED; }
+    bounce(multiplier = 1) { this.vy = -JUMP_SPEED * multiplier; }
 
     draw(ctx, cameraY) {
       const screenX = Math.floor(this.x);
@@ -219,7 +221,16 @@
         const minX = clamp(this.lastTopX - MAX_PLATFORM_DX, 10, GAME_WIDTH - width - 10);
         const maxX = clamp(this.lastTopX + MAX_PLATFORM_DX, 10, GAME_WIDTH - width - 10);
         const x = randomRange(minX, maxX);
-        this.platforms.push({ x, y: currentY, width, height: PLATFORM_HEIGHT, type: Math.random() < MOVING_PLATFORM_CHANCE ? 'moving' : 'static', vx: Math.random() < 0.5 ? 1.2 : -1.2 });
+        let type = 'static';
+        let vx = 0;
+        const r = Math.random();
+        if (r < SPRING_PLATFORM_CHANCE) {
+          type = 'spring';
+        } else if (r < SPRING_PLATFORM_CHANCE + MOVING_PLATFORM_CHANCE) {
+          type = 'moving';
+          vx = Math.random() < 0.5 ? 1.2 : -1.2;
+        }
+        this.platforms.push({ x, y: currentY, width, height: PLATFORM_HEIGHT, type, vx });
         this.lastTopX = x;
         currentY -= randomRange(PLATFORM_VERTICAL_GAP_MIN, PLATFORM_VERTICAL_GAP_MAX);
       }
@@ -235,7 +246,16 @@
         const x = randomRange(minX, maxX);
         const gap = randomRange(PLATFORM_VERTICAL_GAP_MIN, PLATFORM_VERTICAL_GAP_MAX);
         const newY = this.highestPlatformY - gap;
-        this.platforms.push({ x, y: newY, width, height: PLATFORM_HEIGHT, type: Math.random() < MOVING_PLATFORM_CHANCE ? 'moving' : 'static', vx: Math.random() < 0.5 ? 1.2 : -1.2 });
+        let type = 'static';
+        let vx = 0;
+        const r = Math.random();
+        if (r < SPRING_PLATFORM_CHANCE) {
+          type = 'spring';
+        } else if (r < SPRING_PLATFORM_CHANCE + MOVING_PLATFORM_CHANCE) {
+          type = 'moving';
+          vx = Math.random() < 0.5 ? 1.2 : -1.2;
+        }
+        this.platforms.push({ x, y: newY, width, height: PLATFORM_HEIGHT, type, vx });
         this.lastTopX = x;
         this.highestPlatformY = newY;
       }
@@ -261,12 +281,16 @@
         const sx = Math.floor(p.x);
         const sy = Math.floor(p.y - cameraY);
         ctx.lineWidth = 2;
-        ctx.strokeStyle = p.type === 'moving' ? '#0a7' : '#333';
+        // 발판 타입별 컬러
+        if (p.type === 'moving') ctx.strokeStyle = '#0a7';
+        else if (p.type === 'spring') ctx.strokeStyle = '#1e90ff';
+        else ctx.strokeStyle = '#333';
         ctx.beginPath();
         ctx.moveTo(sx, sy);
         ctx.lineTo(sx + p.width, sy);
         ctx.stroke();
-        ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+        // 하단 얇은 음영 또는 스프링 강조선
+        ctx.strokeStyle = p.type === 'spring' ? 'rgba(30,144,255,0.25)' : 'rgba(0,0,0,0.08)';
         ctx.beginPath();
         ctx.moveTo(sx, sy + 3);
         ctx.lineTo(sx + p.width, sy + 3);
@@ -423,7 +447,8 @@
           const overlapsX = this.player.right > p.x && this.player.left < (p.x + p.width);
           if (wasAbove && nowOverlapsY && overlapsX) {
             this.player.y = p.y - this.player.height;
-            this.player.bounce();
+            const mult = p.type === 'spring' ? SPRING_JUMP_MULTIPLIER : 1;
+            this.player.bounce(mult);
             break;
           }
         }
@@ -507,7 +532,7 @@
         ctx.fillText('두들 점프 - 졸라맨', GAME_WIDTH / 2, 220);
         ctx.font = '16px system-ui, sans-serif';
         ctx.fillText('좌/우 화살표·A/D 또는 화면 좌/우 터치', GAME_WIDTH / 2, 270);
-        ctx.fillText('기울임 조작은 우상단 버튼으로 켜세요', GAME_WIDTH / 2, 300);
+        ctx.fillText('파란 발판은 더 높이 점프합니다!', GAME_WIDTH / 2, 300);
         ctx.fillText('시작: Space/Enter/화면 탭', GAME_WIDTH / 2, 330);
       }
 
