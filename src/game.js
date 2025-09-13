@@ -81,6 +81,8 @@
     right: false,
     startPressed: false,
     restartPressed: false,
+    overlayLeftActive: false,
+    overlayRightActive: false,
   };
 
   // 터치 스크롤 방지
@@ -304,7 +306,7 @@
 
       const setPointer = (clientX, active) => {
         if (!active) { input.left = false; input.right = false; return; }
-        if (this.tiltEnabled) return; // 틸트 사용 시 터치는 무시(버튼 제외)
+        if (this.tiltEnabled) return; // 틸트 사용 시 터치 반화면 입력은 무시
         const rect = canvas.getBoundingClientRect();
         const x = clientX - rect.left;
         input.left = x < rect.width / 2;
@@ -346,6 +348,23 @@
           return true;
         } catch (_) { return false; }
       };
+
+      // 온스크린 버튼(모바일)
+      const btnLeft = document.getElementById('btnLeft');
+      const btnRight = document.getElementById('btnRight');
+      const setOverlay = (side, active) => {
+        if (side === 'left') { input.overlayLeftActive = !!active; }
+        if (side === 'right') { input.overlayRightActive = !!active; }
+      };
+      const bindBtn = (el, side) => {
+        if (!el) return;
+        el.addEventListener('pointerdown', (e) => { e.preventDefault(); setOverlay(side, true); el.setPointerCapture(e.pointerId); });
+        el.addEventListener('pointerup', () => setOverlay(side, false));
+        el.addEventListener('pointercancel', () => setOverlay(side, false));
+        el.addEventListener('pointerleave', () => setOverlay(side, false));
+      };
+      bindBtn(btnLeft, 'left');
+      bindBtn(btnRight, 'right');
     }
 
     async toggleTilt() {
@@ -370,6 +389,12 @@
     }
 
     applyTiltToInput() {
+      // 온스크린 버튼이 우선
+      if (input.overlayLeftActive || input.overlayRightActive) {
+        input.left = input.overlayLeftActive;
+        input.right = input.overlayRightActive;
+        return;
+      }
       if (!this.tiltEnabled) return;
       const g = this.tiltGamma || 0;
       const dz = this.tiltDeadzone;

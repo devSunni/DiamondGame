@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doodle-stickman-v1';
+const CACHE_NAME = 'doodle-stickman-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -26,14 +26,12 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  // 우선 캐시, 실패 시 네트워크(offline 우선)
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
       return fetch(request).then((response) => {
         const copy = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
-          // GET만 캐싱
           if (request.method === 'GET' && response.status === 200) {
             cache.put(request, copy);
           }
