@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doodle-stickman-v2';
+const CACHE_NAME = 'doodle-stickman-v3';
 const ASSETS = [
   './',
   './index.html',

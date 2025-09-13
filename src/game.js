@@ -330,6 +330,17 @@
         else if (this.state === STATE_GAMEOVER) input.restartPressed = true;
       });
 
+      // 터치/포인터 다운에서도 동작(모바일 탭 시작)
+      canvas.addEventListener('pointerdown', (e) => {
+        const { x, y } = toLogicalPoint(e.clientX, e.clientY);
+        if (x >= TILT_BTN.x && x <= TILT_BTN.x + TILT_BTN.w && y >= TILT_BTN.y && y <= TILT_BTN.y + TILT_BTN.h) {
+          this.toggleTilt();
+          return;
+        }
+        if (this.state === STATE_MENU) input.startPressed = true;
+        else if (this.state === STATE_GAMEOVER) input.restartPressed = true;
+      });
+
       // 디바이스 오리엔테이션(틸트)
       const onOrientation = (ev) => {
         if (typeof ev.gamma === 'number') {
