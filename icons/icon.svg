@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <mask id="mask">
+      <rect x="0" y="0" width="512" height="512" fill="#fff"/>
+    </mask>
+  </defs>
+  <rect x="0" y="0" width="512" height="512" fill="#ffffff"/>
+  <g stroke="#111111" stroke-width="20" fill="none" stroke-linecap="round" stroke-linejoin="round" mask="url(#mask)">
+    <!-- Head -->
+    <circle cx="256" cy="150" r="60" fill="#ffffff"/>
+    <!-- Body -->
+    <line x1="256" y1="210" x2="256" y2="340" />
+    <!-- Arms -->
+    <line x1="256" y1="250" x2="196" y2="220" />
+    <line x1="256" y1="250" x2="316" y2="230" />
+    <!-- Legs -->
+    <line x1="256" y1="340" x2="210" y2="420" />
+    <line x1="256" y1="340" x2="310" y2="420" />
+    <!-- Platform underline -->
+    <line x1="150" y1="440" x2="362" y2="440" stroke="#0a7" />
+  </g>
+</svg> 

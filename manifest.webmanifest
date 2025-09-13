@@ -1,0 +1,19 @@
+{
+  "name": "두들 점프 - 졸라맨",
+  "short_name": "졸라점프",
+  "description": "HTML5 캔버스 두들 점프 졸라맨 버전",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#111111",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+} 

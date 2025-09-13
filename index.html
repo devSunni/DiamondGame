@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>두들 점프 - 졸라맨 버전</title>
+  <link rel="stylesheet" href="src/styles.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#111111">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="졸라점프">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+</head>
+<body>
+  <canvas id="gameCanvas" width="480" height="720"></canvas>
+  <script src="src/game.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./service-worker.js').catch(function(e){ console.warn('ServiceWorker registration failed', e); });
+      });
+    }
+  </script>
+</body>
+</html> 
