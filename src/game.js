@@ -81,8 +81,6 @@
     right: false,
     startPressed: false,
     restartPressed: false,
-    overlayLeftActive: false,
-    overlayRightActive: false,
   };
 
   // 터치 스크롤 방지
@@ -304,20 +302,20 @@
         if (e.code === 'ArrowRight' || e.code === 'KeyD') input.right = false;
       });
 
-      const setPointer = (clientX, active) => {
+      const setPointer = (clientX, active, pointerId) => {
         if (!active) { input.left = false; input.right = false; return; }
         if (this.tiltEnabled) return; // 틸트 사용 시 터치 반화면 입력은 무시
         const rect = canvas.getBoundingClientRect();
         const x = clientX - rect.left;
         input.left = x < rect.width / 2;
         input.right = x >= rect.width / 2;
+        if (pointerId != null) {
+          try { canvas.setPointerCapture(pointerId); } catch (_) {}
+        }
       };
-      canvas.addEventListener('mousedown', (e) => setPointer(e.clientX, true));
-      window.addEventListener('mouseup', () => setPointer(0, false));
-      canvas.addEventListener('touchstart', (e) => {
-        if (e.touches && e.touches.length > 0) setPointer(e.touches[0].clientX, true);
-      }, { passive: false });
-      window.addEventListener('touchend', () => setPointer(0, false), { passive: false });
+      canvas.addEventListener('pointerdown', (e) => setPointer(e.clientX, true, e.pointerId));
+      canvas.addEventListener('pointermove', (e) => setPointer(e.clientX, e.buttons !== 0));
+      window.addEventListener('pointerup', () => setPointer(0, false));
 
       // 클릭/탭: 시작/재시작/틸트 토글
       canvas.addEventListener('click', (e) => {
@@ -359,23 +357,6 @@
           return true;
         } catch (_) { return false; }
       };
-
-      // 온스크린 버튼(모바일)
-      const btnLeft = document.getElementById('btnLeft');
-      const btnRight = document.getElementById('btnRight');
-      const setOverlay = (side, active) => {
-        if (side === 'left') { input.overlayLeftActive = !!active; }
-        if (side === 'right') { input.overlayRightActive = !!active; }
-      };
-      const bindBtn = (el, side) => {
-        if (!el) return;
-        el.addEventListener('pointerdown', (e) => { e.preventDefault(); setOverlay(side, true); el.setPointerCapture(e.pointerId); });
-        el.addEventListener('pointerup', () => setOverlay(side, false));
-        el.addEventListener('pointercancel', () => setOverlay(side, false));
-        el.addEventListener('pointerleave', () => setOverlay(side, false));
-      };
-      bindBtn(btnLeft, 'left');
-      bindBtn(btnRight, 'right');
     }
 
     async toggleTilt() {
@@ -400,12 +381,6 @@
     }
 
     applyTiltToInput() {
-      // 온스크린 버튼이 우선
-      if (input.overlayLeftActive || input.overlayRightActive) {
-        input.left = input.overlayLeftActive;
-        input.right = input.overlayRightActive;
-        return;
-      }
       if (!this.tiltEnabled) return;
       const g = this.tiltGamma || 0;
       const dz = this.tiltDeadzone;
